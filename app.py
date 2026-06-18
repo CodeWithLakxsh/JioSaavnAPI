@@ -37,7 +37,6 @@ def search():
         
     if query:
         data = jiosaavn.search_for_song(query, lyrics, songdata)
-        # Extract the list so Android gets [{},{},{}] instead of {"results": [...]}
         return jsonify(ensure_list(data))
     else:
         return jsonify({"status": False, "error": 'Query is required!'})
@@ -101,7 +100,7 @@ def lyrics():
 def result():
     lyrics = False
     query = request.args.get('query')
-    # CAPTURE THE 'n' PARAMETER FROM ANDROID (Defaults to 20 if not sent)
+    # Capture the 'n' parameter from Android (Defaults to 20 if not sent)
     n = int(request.args.get('n', 20)) 
     lyrics_ = request.args.get('lyrics')
     if lyrics_ and lyrics_.lower() != 'false':
@@ -120,11 +119,12 @@ def result():
         elif '/album/' in query:
             id = jiosaavn.get_album_id(query)
             data = jiosaavn.get_album(id, lyrics)
+        # Fixed logic bug: used 'in' for both conditions
         elif '/playlist/' in query or '/featured/' in query:
             id = jiosaavn.get_playlist_id(query)
             data = jiosaavn.get_playlist(id, lyrics)
         
-        # EXTRACT LIST AND SLICE TO 'n' (the number sent by Android)
+        # Extract list and slice to 'n'
         return jsonify(ensure_list(data)[:n])
 
     except Exception as e:
