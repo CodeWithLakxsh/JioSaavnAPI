@@ -4,10 +4,8 @@ import retrofit2.Call
 import retrofit2.http.GET
 import retrofit2.http.Query
 
-interface JioSaavnApi {
-    @GET("result/")
-    fun searchSongs(
-        @Query("query") searchQuery: String,
-        @Query("n") n: Int = 20   // changed from "limit" to "n"
-    ): Call<List<ApiSong>>
-}
+@GET("result/")
+suspend fun searchSongs(
+    @Query("query") query: String,
+    @Query("n") n: Int = 20
+): List<ApiSong> // <--- This MUST be List<ApiSong> now
