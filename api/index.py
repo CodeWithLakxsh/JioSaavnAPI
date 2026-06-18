@@ -31,10 +31,13 @@ def search():
     if lyrics_ and lyrics_.lower() != 'false': lyrics = True
     if songdata_ and songdata_.lower() != 'true': songdata = False
     if query:
-        data = jiosaavn.search_for_song(query, lyrics, songdata)
-        return jsonify(ensure_list(data))
+        try:
+            data = jiosaavn.search_for_song(query, lyrics, songdata)
+            return jsonify(ensure_list(data))
+        except:
+            return jsonify([]) # Return empty list on failure
     else:
-        return jsonify({"status": False, "error": 'Query is required!'})
+        return jsonify([])
 
 @app.route('/song/get/')
 def get_song():
@@ -43,9 +46,12 @@ def get_song():
     lyrics_ = request.args.get('lyrics')
     if lyrics_ and lyrics_.lower() != 'false': lyrics = True
     if song_id:
-        resp = jiosaavn.get_song(song_id, lyrics)
-        if not resp: return jsonify({"status": False, "error": 'Invalid Song ID!'})
-        return jsonify(resp)
+        try:
+            resp = jiosaavn.get_song(song_id, lyrics)
+            if not resp: return jsonify({"status": False, "error": 'Invalid Song ID!'})
+            return jsonify(resp)
+        except:
+            return jsonify({"status": False, "error": 'Error fetching song'})
     return jsonify({"status": False, "error": 'Song ID is required!'})
 
 @app.route('/playlist/')
@@ -55,10 +61,13 @@ def playlist():
     lyrics_ = request.args.get('lyrics')
     if lyrics_ and lyrics_.lower() != 'false': lyrics = True
     if query:
-        id = jiosaavn.get_playlist_id(query)
-        songs = jiosaavn.get_playlist(id, lyrics)
-        return jsonify(ensure_list(songs))
-    return jsonify({"status": False, "error": 'Query is required!'})
+        try:
+            id = jiosaavn.get_playlist_id(query)
+            songs = jiosaavn.get_playlist(id, lyrics)
+            return jsonify(ensure_list(songs))
+        except:
+            return jsonify([])
+    return jsonify([])
 
 @app.route('/album/')
 def album():
@@ -67,10 +76,13 @@ def album():
     lyrics_ = request.args.get('lyrics')
     if lyrics_ and lyrics_.lower() != 'false': lyrics = True
     if query:
-        id = jiosaavn.get_album_id(query)
-        songs = jiosaavn.get_album(id, lyrics)
-        return jsonify(ensure_list(songs))
-    return jsonify({"status": False, "error": 'Query is required!'})
+        try:
+            id = jiosaavn.get_album_id(query)
+            songs = jiosaavn.get_album(id, lyrics)
+            return jsonify(ensure_list(songs))
+        except:
+            return jsonify([])
+    return jsonify([])
 
 @app.route('/lyrics/')
 def lyrics():
@@ -91,12 +103,16 @@ def lyrics():
 def result():
     lyrics = False
     query = request.args.get('query')
-    n = int(request.args.get('n', 20)) 
+    # Default to 20, or whatever user specifies
+    n = int(request.args.get('n', 20))
     lyrics_ = request.args.get('lyrics')
     if lyrics_ and lyrics_.lower() != 'false': lyrics = True
+
+    if not query:
+        return jsonify([])
+
     try:
         data = None
-        if not query: return jsonify({"error": "Query required"})
         if 'saavn' not in query:
             data = jiosaavn.search_for_song(query, lyrics, True)
         elif '/song/' in query:
@@ -108,10 +124,14 @@ def result():
         elif '/playlist/' in query or '/featured/' in query:
             id = jiosaavn.get_playlist_id(query)
             data = jiosaavn.get_playlist(id, lyrics)
-        return jsonify(ensure_list(data)[:n])
+
+        # Ensure we always return a list, and slice it to 'n'
+        result_list = ensure_list(data)
+        return jsonify(result_list[:n])
+
     except Exception as e:
         print_exc()
-        return jsonify({"status": False, "error": str(e)})
+        return jsonify([]) # Return empty list instead of crashing
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5100, use_reloader=True, threaded=True)
