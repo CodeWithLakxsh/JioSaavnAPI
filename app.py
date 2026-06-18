@@ -101,6 +101,8 @@ def lyrics():
 def result():
     lyrics = False
     query = request.args.get('query')
+    # CAPTURE THE 'n' PARAMETER FROM ANDROID (Defaults to 20 if not sent)
+    n = int(request.args.get('n', 20)) 
     lyrics_ = request.args.get('lyrics')
     if lyrics_ and lyrics_.lower() != 'false':
         lyrics = True
@@ -122,8 +124,8 @@ def result():
             id = jiosaavn.get_playlist_id(query)
             data = jiosaavn.get_playlist(id, lyrics)
         
-        # This is the crucial part: extract the list before sending to Android
-        return jsonify(ensure_list(data))
+        # EXTRACT LIST AND SLICE TO 'n' (the number sent by Android)
+        return jsonify(ensure_list(data)[:n])
 
     except Exception as e:
         print_exc()
